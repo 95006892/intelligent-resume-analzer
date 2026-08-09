@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Scanner — JD Match Analyzer</title>
+<style>
+  :root{
+    --desk:#121821;
+    --desk-2:#1a222d;
+    --paper:#f4f1e6;
+    --paper-2:#eae5d4;
+    --ink:#20242c;
+    --ink-soft:#565c68;
+    --amber:#e8b74b;
+    --amber-deep:#c99328;
+    --teal:#3f8f8c;
+    --rust:#c1543a;
+    --line: rgba(244,241,230,0.14);
+    --mono: ui-monospace, "SFMono-Regular", "Consolas", "Menlo", monospace;
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(232,183,75,0.07), transparent 60%),
+      var(--desk);
+    color:var(--paper);
+    font-family:var(--sans);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  a{color:inherit;}
+
+  /* ---------- Hero ---------- */
+  header.hero{
+    position:relative;
+    padding:56px 24px 42px;
+    text-align:center;
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:14px;
+  }
+  h1.title{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:clamp(32px,5vw,54px);
+    margin:0 0 12px;
+    letter-spacing:-0.01em;
+  }
+  h1.title .scan{
+    position:relative;
+    display:inline-block;
+  }
+  h1.title .scan::after{
+    content:"";
+    position:absolute;
+    left:-4px;right:-4px;top:8%;
+    height:38%;
+    background:linear-gradient(90deg, transparent, rgba(232,183,75,0.55), transparent);
+    transform:translateX(-120%);
+    animation:sweep 3.4s ease-in-out infinite;
+    animation-delay:0.6s;
+    pointer-events:none;
+  }
+  @keyframes sweep{
+    0%{transform:translateX(-120%);}
+    35%{transform:translateX(120%);}
+    100%{transform:translateX(120%);}
+  }
+  .sub{
+    max-width:560px;
+    margin:0 auto;
+    color:var(--paper-2);
+    font-size:15.5px;
+  }
+  .badges{
+    display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+    margin-top:22px;
+  }
+  .badge{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.04em;
+    border:1px solid var(--line);
+    padding:6px 11px;
+    border-radius:100px;
+    color:var(--paper-2);
+  }
+  .badge b{color:var(--amber);font-weight:600;}
+
+  /* ---------- Tabs ---------- */
+  .tabbar{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    padding:22px 16px 0;
+  }
+  .tabbtn{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--paper-2);
+    padding:10px 18px;
+    border-radius:8px 8px 0 0;
+    cursor:pointer;
+    border-bottom:none;
+  }
+  .tabbtn.active{
+    background:var(--paper);
+    color:var(--ink);
+    border-color:var(--paper);
+  }
+
+  main{max-width:1040px;margin:0 auto;padding:0 20px 80px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* ---------- Paper cards ---------- */
+  .desk{
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:4px;
+    padding:28px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.55);
+  }
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+  .field label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+  .field label .count{color:#9a9686;font-weight:400;text-transform:none;letter-spacing:0;}
+  textarea{
+    width:100%;
+    min-height:220px;
+    resize:vertical;
+    background:#fffdf7;
+    border:1px solid #dcd6c3;
+    border-radius:3px;
+    padding:14px;
+    font-family:var(--sans);
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+  }
+  textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(63,143,140,0.12);}
+  .filebtn{
+    display:inline-block;
+    margin-top:8px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--teal);
+    cursor:pointer;
+    text-decoration:underline;
+  }
+  input[type=file]{display:none;}
+
+  .runbar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin-top:26px;
+  }
+  button.primary{
+    font-family:var(--mono);
+    font-size:13px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:14px 26px;
+    border-radius:3px;
+    cursor:pointer;
+    transition:transform .12s ease;
+  }
+  button.primary:hover{transform:translateY(-1px);}
+  button.primary:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+  button.ghost{
+    font-family:var(--mono);
+    font-size:12px;
+    background:none;
+    border:1px solid #cfc9b4;
+    color:var(--ink-soft);
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+  }
+  button.ghost:hover{border-color:var(--teal);color:var(--teal);}
+
+  /* ---------- Results ---------- */
+  #results{margin-top:34px;}
+  .result-head{
+    display:flex;
+    gap:26px;
+    align-items:center;
+    flex-wrap:wrap;
+    border-bottom:1px dashed #d9d2ba;
+    padding-bottom:24px;
+    margin-bottom:24px;
+  }
+  .stamp{
+    width:132px;height:132px;
+    border-radius:50%;
+    border:3px double currentColor;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    transform:rotate(-7deg);
+    flex:0 0 auto;
+    font-family:var(--mono);
+  }
+  .stamp .pct{font-size:30px;font-weight:700;line-height:1;}
+  .stamp .lbl{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;margin-top:4px;}
+  .tier-strong{color:#1f7a52;}
+  .tier-moderate{color:var(--amber-deep);}
+  .tier-weak{color:var(--rust);}
+
+  .verdict h2{
+    font-family:var(--serif);
+    margin:0 0 6px;
+    font-size:23px;
+  }
+  .verdict p{margin:0;color:var(--ink-soft);font-size:13.5px;max-width:480px;}
+
+  .barrows{margin-top:4px;}
+  .barrow{display:grid;grid-template-columns:150px 1fr 46px;gap:10px;align-items:center;margin:9px 0;}
+  .barrow .cat{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);}
+  .barrow .track{height:8px;background:#e7e1cd;border-radius:100px;overflow:hidden;}
+  .barrow .fill{height:100%;border-radius:100px;width:0;transition:width .8s cubic-bezier(.2,.8,.2,1);}
+  .barrow .num{font-family:var(--mono);font-size:11.5px;text-align:right;color:var(--ink-soft);}
+
+  .chipsec h3{
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:22px 0 10px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{
+    font-size:12.5px;
+    padding:5px 11px;
+    border-radius:100px;
+    font-family:var(--sans);
+  }
+  .chip.match{background:rgba(63,143,140,0.14);color:#1f5f5c;border:1px solid rgba(63,143,140,0.35);}
+  .chip.miss{background:rgba(193,84,58,0.10);color:var(--rust);border:1px solid rgba(193,84,58,0.3);}
+
+  .empty-hint{
+    text-align:center;
+    color:var(--paper-2);
+    opacity:0.65;
+    font-size:13.5px;
+    padding:30px 0 10px;
+  }
+
+  /* ---------- Batch ---------- */
+  .resume-slot{
+    border:1px solid #dcd6c3;
+    border-radius:3px;
+    padding:16px;
+    margin-bottom:14px;
+    background:#fffdf7;
+  }
+  .resume-slot-head{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+  .resume-slot-head input[type=text]{
+    flex:1;
+    font-family:var(--mono);
+    font-size:13px;
+    padding:8px 10px;
+    border:1px solid #dcd6c3;
+    border-radius:3px;
+    background:#fff;
+  }
+  .remove-slot{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--rust);
+    background:none;border:1px solid rgba(193,84,58,0.35);
+    padding:6px 10px;border-radius:3px;cursor:pointer;
+  }
+  .resume-slot textarea{min-height:110px;font-size:13px;}
+
+  table.rank{width:100%;border-collapse:collapse;margin-top:6px;}
+  table.rank th{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
+    text-align:left;color:var(--ink-soft);padding:8px 10px;border-bottom:1px solid #d9d2ba;
+  }
+  table.rank td{padding:12px 10px;border-bottom:1px solid #ece7d6;font-size:13.5px;vertical-align:middle;}
+  table.rank tr.rankrow{cursor:pointer;}
+  table.rank tr.rankrow:hover{background:#f7f3e5;}
+  .rank-num{font-family:var(--mono);color:var(--ink-soft);}
+  .mini-track{width:100%;height:7px;background:#e7e1cd;border-radius:100px;overflow:hidden;}
+  .mini-fill{height:100%;border-radius:100px;}
+  .tier-pill{
+    font-family:var(--mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;
+    padding:3px 8px;border-radius:100px;
+  }
+  .detail-row td{background:#f7f3e5;padding:0;}
+  .detail-inner{padding:18px 14px 22px;}
+
+  footer{
+    text-align:center;
+    padding:30px 20px 50px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--paper-2);
+    opacity:0.55;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .barrow .fill{transition:none;}
+    h1.title .scan::after{animation:none;display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">Offline · No Libraries · No Internet Required</div>
+  <h1 class="title"><span class="scan">Resume Scanner</span></h1>
+  <p class="sub">Paste a job description and a resume — get a match score, matched &amp; missing skills, and a candidate ranking. Every calculation happens on this page, in your browser.</p>
+  <div class="badges">
+    <span class="badge">Engine — <b>Vanilla JS</b></span>
+    <span class="badge">Runs — <b>100% Local</b></span>
+    <span class="badge">Dependencies — <b>Zero</b></span>
+  </div>
+</header>
+
+<div class="tabbar">
+  <button class="tabbtn active" data-tab="single">Single Resume</button>
+  <button class="tabbtn" data-tab="batch">Batch Ranking</button>
+</div>
+
+<main>
+  <!-- ============ SINGLE PANEL ============ -->
+  <section class="panel active" id="panel-single">
+    <div class="desk">
+      <div class="grid2">
+        <div class="field">
+          <label>Job Description <span class="count" id="jd-count">0 words</span></label>
+          <textarea id="jd-text" placeholder="Paste the job description here..."></textarea>
+          <label class="filebtn" for="jd-file">Upload .txt file instead</label>
+          <input type="file" id="jd-file" accept=".txt">
+        </div>
+        <div class="field">
+          <label>Resume <span class="count" id="resume-count">0 words</span></label>
+          <textarea id="resume-text" placeholder="Paste the candidate's resume here..."></textarea>
+          <label class="filebtn" for="resume-file">Upload .txt file instead</label>
+          <input type="file" id="resume-file" accept=".txt">
+        </div>
+      </div>
+      <div class="runbar">
+        <button class="ghost" id="load-sample">Load sample data</button>
+        <button class="primary" id="analyze-btn">Analyze Match</button>
+      </div>
+
+      <div id="results"></div>
+      <div class="empty-hint" id="empty-hint">Results will appear here once you run an analysis.</div>
+    </div>
+  </section>
+
+  <!-- ============ BATCH PANEL ============ -->
+  <section class="panel" id="panel-batch">
+    <div class="desk">
+      <div class="field">
+        <label>Job Description <span class="count" id="jd-count-b">0 words</span></label>
+        <textarea id="jd-text-b" placeholder="Paste the job description here..."></textarea>
+        <label class="filebtn" for="jd-file-b">Upload .txt file instead</label>
+        <input type="file" id="jd-file-b" accept=".txt">
+      </div>
+
+      <div class="field" style="margin-top:22px;">
+        <label>Add resumes <span class="count" id="bulk-count">0 loaded</span></label>
+        <label class="filebtn" for="bulk-file" style="font-size:13px;">Select multiple .txt files</label>
+        &nbsp;&nbsp;
+        <label class="filebtn" for="folder-file" style="font-size:13px;">Upload a whole folder of resumes</label>
+        <input type="file" id="bulk-file" accept=".txt" multiple>
+        <input type="file" id="folder-file" webkitdirectory directory multiple style="display:none;">
+      </div>
+
+      <div id="resume-slots" style="margin-top:18px;"></div>
+      <button class="ghost" id="add-slot">+ Add resume manually</button>
+
+      <div class="runbar">
+        <button class="ghost" id="load-sample-b">Load sample data</button>
+        <button class="primary" id="rank-btn">Rank Candidates</button>
+      </div>
+
+      <div id="batch-results" style="margin-top:30px;"></div>
+    </div>
+  </section>
+</main>
+
+<footer>Intelligent Resume Analyzer — pure HTML / CSS / JavaScript, no frameworks, no APIs, no build step.</footer>
+
+<script>
+/* ======================================================================
+   INTELLIGENT RESUME ANALYZER — matching engine
+   Everything below uses only built-in JavaScript (ES6+) features:
+   RegExp, Map, Set, Math, Array/String prototype methods.
+   No external libraries, packages, or network calls anywhere.
+   ====================================================================== */
+
+const SKILL_DB = {
+  "Programming": ["python","java","javascript","typescript","c++","c#"," c ","sql","r ","go","golang","ruby","php","swift","kotlin","scala","matlab","perl","html","css"],
+  "Web & Frameworks": ["react","angular","vue","django","flask","node.js","nodejs","express","spring","spring boot","laravel","bootstrap","jquery","next.js","fastapi","rest api"],
+  "Databases": ["mysql","postgresql","mongodb","oracle","sqlite","redis","cassandra","dynamodb","firebase"],
+  "Cloud & DevOps": ["aws","azure","gcp","docker","kubernetes","jenkins","git","github","gitlab","ci/cd","linux","terraform"],
+  "Data & AI": ["machine learning","deep learning","tensorflow","pytorch","keras","pandas","numpy","scikit-learn","nlp","computer vision","data analysis","data science","tableau","power bi","excel","statistics"],
+  "Soft Skills": ["leadership","teamwork","communication","problem solving","time management","adaptability","creativity","collaboration","critical thinking","project management"]
+};
+
+const EDU_TERMS = ["b.tech","btech","m.tech","mtech","b.e.","b.e","m.e.","m.e","bachelor","master","mba","phd","b.sc","bsc","m.sc","msc","mca","bca","diploma"];
+
+const STOPWORDS = new Set(("a an the and or but if then else for to of in on at by with from as is are was were be been being "+
+  "this that these those it its into your you we our their they he she his her i my me will would can could should shall "+
+  "have has had do does did not no yes so such than too very just about over under above below up down out off again "+
+  "further here there when where why how all any both each few more most other some own same s t don now years experience "+
+  "work team looking candidate role job description responsibilities requirements skills required preferred strong ability "+
+  "excellent knowledge including etc use used using per year per").split(" "));
+
+function normalize(text){
+  return (text || "").toLowerCase();
+}
+
+function tokenize(text){
+  const norm = normalize(text).replace(/[^a-z0-9+#. ]/g," ");
+  return norm.split(/\s+/).filter(w => w.length > 2 && !STOPWORDS.has(w));
+}
+
+function extractSkills(text){
+  const norm = " " + normalize(text).replace(/[,;/()]/g," ") + " ";
+  const found = {};
+  for (const cat in SKILL_DB){
+    found[cat] = [];
+    SKILL_DB[cat].forEach(skill => {
+      const s = skill.trim();
+      if (s.length === 0) return;
+      if (norm.includes(" " + s) || norm.includes(s + " ")) {
+        found[cat].push(s.trim());
+      }
+    });
+  }
+  return found;
+}
+
+function flatten(skillObj){
+  let out = [];
+  for (const cat in skillObj) out = out.concat(skillObj[cat]);
+  return out;
+}
+
+function wordFreq(tokens){
+  const m = new Map();
+  tokens.forEach(t => m.set(t, (m.get(t)||0)+1));
+  return m;
+}
+
+function cosineSimilarity(freqA, freqB){
+  const vocab = new Set([...freqA.keys(), ...freqB.keys()]);
+  let dot=0, magA=0, magB=0;
+  vocab.forEach(w=>{
+    const a = freqA.get(w)||0, b = freqB.get(w)||0;
+    dot += a*b; magA += a*a; magB += b*b;
+  });
+  if (magA===0 || magB===0) return 0;
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+}
+
+function extractYears(text){
+  const m = normalize(text).match(/(\d+)\+?\s*(?:years|yrs)/);
+  return m ? parseInt(m[1],10) : null;
+}
+
+function extractEducation(text){
+  const norm = " " + normalize(text) + " ";
+  return EDU_TERMS.filter(t => norm.includes(" "+t) || norm.includes(t+" "));
+}
+
+function analyze(jdText, resumeText){
+  const jdSkills = extractSkills(jdText);
+  const resSkills = extractSkills(resumeText);
+
+  const jdFlat = flatten(jdSkills);
+  const resFlat = new Set(flatten(resSkills));
+
+  const matched = jdFlat.filter(s => resFlat.has(s));
+  const missing = jdFlat.filter(s => !resFlat.has(s));
+  const skillScore = jdFlat.length ? (matched.length / jdFlat.length) * 100 : 50;
+
+  const jdFreq = wordFreq(tokenize(jdText));
+  const resFreq = wordFreq(tokenize(resumeText));
+  const textSim = cosineSimilarity(jdFreq, resFreq) * 100;
+
+  const jdYears = extractYears(jdText);
+  const resYears = extractYears(resumeText);
+  let expScore = 70; // neutral if JD doesn't specify
+  if (jdYears !== null){
+    if (resYears === null) expScore = 30;
+    else expScore = Math.min(100, (resYears / jdYears) * 100);
+  }
+
+  const jdEdu = extractEducation(jdText);
+  const resEdu = extractEducation(resumeText);
+  const eduMatch = jdEdu.length === 0 ? true : jdEdu.some(e => resEdu.includes(e));
+
+  const overall = Math.round(
+    skillScore * 0.55 +
+    textSim * 0.30 +
+    expScore * 0.15
+  );
+
+  const catBreakdown = {};
+  for (const cat in jdSkills){
+    const total = jdSkills[cat].length;
+    if (total === 0) continue;
+    const got = jdSkills[cat].filter(s => resFlat.has(s)).length;
+    catBreakdown[cat] = Math.round((got/total)*100);
+  }
+
+  return {
+    overall: Math.max(0, Math.min(100, overall)),
+    skillScore: Math.round(skillScore),
+    textSim: Math.round(textSim),
+    expScore: Math.round(expScore),
+    matched, missing, catBreakdown,
+    jdYears, resYears, eduMatch, jdEdu, resEdu
+  };
+}
+
+function tier(score){
+  if (score >= 75) return {cls:"tier-strong", label:"Strong Match"};
+  if (score >= 50) return {cls:"tier-moderate", label:"Moderate Match"};
+  return {cls:"tier-weak", label:"Weak Match"};
+}
+function tierColor(score){
+  if (score >= 75) return "#1f7a52";
+  if (score >= 50) return "#c99328";
+  return "#c1543a";
+}
+
+/* ---------------- Rendering: single analysis ---------------- */
+function renderResult(container, r){
+  const t = tier(r.overall);
+  let suggestion = "";
+  if (r.missing.length){
+    suggestion = "Consider highlighting or gaining experience in: " + r.missing.slice(0,6).join(", ") + (r.missing.length>6 ? ", …" : "") + ".";
+  } else {
+    suggestion = "This resume covers every skill keyword found in the job description.";
+  }
+  if (r.jdYears !== null){
+    if (r.resYears === null) suggestion += " The JD asks for " + r.jdYears + "+ years — no clear experience duration was found in the resume.";
+    else if (r.resYears < r.jdYears) suggestion += " The JD asks for " + r.jdYears + "+ years; resume shows about " + r.resYears + ".";
+  }
+
+  const barsHtml = Object.keys(r.catBreakdown).map(cat=>{
+    const val = r.catBreakdown[cat];
+    return `<div class="barrow">
+      <div class="cat">${cat}</div>
+      <div class="track"><div class="fill" data-w="${val}" style="background:${tierColor(val)}"></div></div>
+      <div class="num">${val}%</div>
+    </div>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="result-head">
+      <div class="stamp ${t.cls}">
+        <div class="pct">${r.overall}%</div>
+        <div class="lbl">${t.label}</div>
+      </div>
+      <div class="verdict">
+        <h2>${t.label}</h2>
+        <p>${suggestion}</p>
+      </div>
+    </div>
+    <div class="barrows">${barsHtml || '<p style="color:#8a92a3;font-size:13px;">No tracked skill keywords were detected in the job description.</p>'}</div>
+    <div class="chipsec">
+      <h3>Matched skills (${r.matched.length})</h3>
+      <div class="chips">${r.matched.map(s=>`<span class="chip match">${s}</span>`).join("") || '<span style="color:#8a92a3;font-size:13px;">None found</span>'}</div>
+      <h3>Missing skills (${r.missing.length})</h3>
+      <div class="chips">${r.missing.map(s=>`<span class="chip miss">${s}</span>`).join("") || '<span style="color:#8a92a3;font-size:13px;">None — full coverage</span>'}</div>
+    </div>
+  `;
+  requestAnimationFrame(()=>{
+    container.querySelectorAll(".fill").forEach(f=>{ f.style.width = f.dataset.w + "%"; });
+  });
+}
+
+/* ---------------- Word counters + file loaders ---------------- */
+function wireCounter(taId, countId){
+  const ta = document.getElementById(taId), c = document.getElementById(countId);
+  ta.addEventListener("input", ()=>{
+    const n = ta.value.trim().length ? ta.value.trim().split(/\s+/).length : 0;
+    c.textContent = n + " words";
+  });
+}
+function wireFileLoad(fileId, taId){
+  document.getElementById(fileId).addEventListener("change", e=>{
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById(taId).value = ev.target.result;
+      document.getElementById(taId).dispatchEvent(new Event("input"));
+    };
+    reader.readAsText(f);
+  });
+}
+
+wireCounter("jd-text","jd-count");
+wireCounter("resume-text","resume-count");
+wireCounter("jd-text-b","jd-count-b");
+wireFileLoad("jd-file","jd-text");
+wireFileLoad("resume-file","resume-text");
+wireFileLoad("jd-file-b","jd-text-b");
+
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll(".tabbtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tabbtn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+/* ---------------- Single analysis wiring ---------------- */
+document.getElementById("analyze-btn").addEventListener("click", ()=>{
+  const jd = document.getElementById("jd-text").value;
+  const res = document.getElementById("resume-text").value;
+  if (!jd.trim() || !res.trim()){
+    alert("Please provide both a job description and a resume.");
+    return;
+  }
+  const result = analyze(jd, res);
+  document.getElementById("empty-hint").style.display = "none";
+  renderResult(document.getElementById("results"), result);
+});
+
+const SAMPLE_JD = "We are hiring a Backend Developer with 3+ years of experience.\n"+
+"Required skills: Python, Django, REST API, PostgreSQL, Docker, Git, AWS.\n"+
+"Good to have: React, Redis, CI/CD, Kubernetes.\n"+
+"Education: B.Tech / B.E in Computer Science or related field.\n"+
+"The candidate should have strong problem solving, communication and teamwork skills, "+
+"and experience working in an agile team environment.";
+
+const SAMPLE_RESUME = "Software engineer with 2 years of experience building web applications.\n"+
+"Skills: Python, Flask, MySQL, Git, HTML, CSS, JavaScript, basic AWS.\n"+
+"Education: B.Tech in Computer Science, 2023.\n"+
+"Worked in a small team, handled client communication and led two intern projects, "+
+"strong focus on problem solving and collaboration.";
+
+document.getElementById("load-sample").addEventListener("click", ()=>{
+  document.getElementById("jd-text").value = SAMPLE_JD;
+  document.getElementById("resume-text").value = SAMPLE_RESUME;
+  document.getElementById("jd-text").dispatchEvent(new Event("input"));
+  document.getElementById("resume-text").dispatchEvent(new Event("input"));
+});
+
+/* ---------------- Batch panel ---------------- */
+let slotCount = 0;
+function addSlot(name, text){
+  slotCount++;
+  const id = slotCount;
+  const div = document.createElement("div");
+  div.className = "resume-slot";
+  div.dataset.id = id;
+  div.innerHTML = `
+    <div class="resume-slot-head">
+      <input type="text" class="slot-name" placeholder="Candidate name" value="${name || ('Candidate ' + id)}">
+      <label class="filebtn" style="margin:0;" for="slot-file-${id}">Upload .txt</label>
+      <input type="file" id="slot-file-${id}" accept=".txt" class="slot-file">
+      <button class="remove-slot" data-remove="${id}">Remove</button>
+    </div>
+    <textarea class="slot-text" placeholder="Paste this candidate's resume here...">${text || ""}</textarea>
+  `;
+  document.getElementById("resume-slots").appendChild(div);
+  div.querySelector(".remove-slot").addEventListener("click", ()=> div.remove());
+  div.querySelector(".slot-file").addEventListener("change", e=>{
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = ev => { div.querySelector(".slot-text").value = ev.target.result; };
+    reader.readAsText(f);
+  });
+}
+document.getElementById("add-slot").addEventListener("click", ()=> addSlot());
+addSlot(); addSlot(); addSlot(); // start with three slots
+
+/* Bulk upload: pick many resume .txt files at once (or a whole folder), each becomes its own slot */
+let bulkLoadedCount = 0;
+function loadFilesAsSlots(fileList){
+  const files = [...fileList].filter(f => f.name.toLowerCase().endsWith(".txt"));
+  if (!files.length){
+    alert("No .txt files found in your selection. Only plain-text (.txt) resumes are supported.");
+    return;
+  }
+  files.forEach(f=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const baseName = f.name.split("/").pop().replace(/\.[^/.]+$/, "");
+      addSlot(baseName, ev.target.result);
+      bulkLoadedCount++;
+      document.getElementById("bulk-count").textContent = bulkLoadedCount + " loaded";
+    };
+    reader.readAsText(f);
+  });
+}
+document.getElementById("bulk-file").addEventListener("change", e=>{
+  loadFilesAsSlots(e.target.files);
+  e.target.value = ""; // allow re-selecting the same files later
+});
+document.getElementById("folder-file").addEventListener("change", e=>{
+  loadFilesAsSlots(e.target.files);
+  e.target.value = "";
+});
+
+document.getElementById("load-sample-b").addEventListener("click", ()=>{
+  document.getElementById("jd-text-b").value = SAMPLE_JD;
+  document.getElementById("jd-text-b").dispatchEvent(new Event("input"));
+  document.getElementById("resume-slots").innerHTML = "";
+  addSlot("Asha (strong match)", SAMPLE_RESUME);
+  addSlot("Ravi (junior profile)", "Fresher with internship experience in web development.\nSkills: HTML, CSS, JavaScript, basic Python.\nEducation: B.Sc Computer Science, 2024.\nEnthusiastic learner, good communication skills.");
+  addSlot("Meera (senior mismatch)", "Senior data scientist with 6 years of experience.\nSkills: Python, TensorFlow, PyTorch, Pandas, NumPy, SQL, Tableau.\nEducation: M.Tech, Data Science.\nExpert in machine learning, deep learning and NLP projects.");
+});
+
+document.getElementById("rank-btn").addEventListener("click", ()=>{
+  const jd = document.getElementById("jd-text-b").value;
+  if (!jd.trim()){ alert("Please provide a job description."); return; }
+  const slots = [...document.querySelectorAll(".resume-slot")];
+  const entries = slots.map(s=>({
+    name: s.querySelector(".slot-name").value.trim() || "Unnamed candidate",
+    text: s.querySelector(".slot-text").value
+  })).filter(e => e.text.trim().length > 0);
+
+  if (!entries.length){ alert("Add at least one resume with text."); return; }
+
+  const results = entries.map(e => ({ name: e.name, r: analyze(jd, e.text) }))
+                          .sort((a,b) => b.r.overall - a.r.overall);
+
+  renderBatch(document.getElementById("batch-results"), jd, results);
+});
+
+function renderBatch(container, jd, results){
+  const rows = results.map((item, idx)=>{
+    const t = tier(item.r.overall);
+    return `
+    <tr class="rankrow" data-idx="${idx}">
+      <td class="rank-num">#${idx+1}</td>
+      <td>${item.name}</td>
+      <td style="width:160px;">
+        <div class="mini-track"><div class="mini-fill" style="width:${item.r.overall}%;background:${tierColor(item.r.overall)}"></div></div>
+      </td>
+      <td style="width:60px;font-family:var(--mono);">${item.r.overall}%</td>
+      <td style="width:130px;"><span class="tier-pill" style="background:${tierColor(item.r.overall)}22;color:${tierColor(item.r.overall)};">${t.label}</span></td>
+    </tr>
+    <tr class="detail-row" id="detail-${idx}" style="display:none;"><td colspan="5"><div class="detail-inner"></div></td></tr>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <h3 style="font-family:var(--mono);font-size:11.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;">
+      Ranked candidates — click a row for details
+    </h3>
+    <table class="rank">
+      <thead><tr><th>Rank</th><th>Candidate</th><th>Score</th><th></th><th>Verdict</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  container.querySelectorAll(".rankrow").forEach(row=>{
+    row.addEventListener("click", ()=>{
+      const idx = row.dataset.idx;
+      const detailRow = document.getElementById("detail-"+idx);
+      const isOpen = detailRow.style.display !== "none";
+      container.querySelectorAll(".detail-row").forEach(d=> d.style.display="none");
+      if (!isOpen){
+        detailRow.style.display = "";
+        renderResult(detailRow.querySelector(".detail-inner"), results[idx].r);
+      }
+    });
+  });
+}
+</script>
+</body>
+</html>
